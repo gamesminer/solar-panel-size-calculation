@@ -7,7 +7,7 @@ export const MainComponent = () => {
 
   return (
     <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', width: '100%', alignItems: 'center', justifyContent: 'center', padding: '20px', gap: '20px', height: '100vh' }}>
-      <button onClick={() => window.location.reload()} style={{ position: 'absolute', left: '20px', top: '20px'}}>Перезавантажити</button>
+      <button onClick={() => window.location.reload()} style={{ position: 'absolute', left: '20px', top: '20px', width: '80px', height: '30px'}}>RESET</button>
       {showImage ? (
         <ResultComponent corner={parseInt(value.corner)} length={parseFloat(value.length)} />
       ): (
