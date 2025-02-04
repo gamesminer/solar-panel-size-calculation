@@ -27,7 +27,7 @@ export const MainComponent = () => {
               alignItems: 'flex-start',
             }}
             >
-              <h4>Кут нахилу криші(°С)</h4>
+              <h4>Кут нахилу криші (°С)</h4>
               <input
                 type="text"
                 value={value.corner}
