@@ -27,7 +27,7 @@ export const MainComponent = () => {
               alignItems: 'flex-start',
             }}
             >
-              <h4>Кут нахилу (°)</h4>
+              <h4>Кут нахилу криші(°С)</h4>
               <input
                 type="text"
                 value={value.corner}
@@ -50,7 +50,7 @@ export const MainComponent = () => {
                   }
                 }}
                 style={{ width: '140px' }}
-                placeholder="кут нахилу"
+                placeholder="кут нахилу криші"
               />
               <span style={{ fontSize: '12px', marginTop: '2px' }}>1 - 360, без знаків</span>
             </div>

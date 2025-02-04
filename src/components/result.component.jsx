@@ -22,7 +22,7 @@ export const ResultComponent = ({ corner, length }) => {
     <div style={{position: 'relative', width: '1000px', height: '384px', display: 'flex', flexDirection: 'column'}}>
       <div
         style={{position: 'absolute', left: 0, top: 0, display: 'flex', flexDirection: 'column', alignItems: 'start'}}>
-        <span>Кут нахилу: <b style={{color: RED_COLOR}}>{corner}°</b></span>
+        <span>Кут нахилу криші: <b style={{color: RED_COLOR}}>{corner}°С</b></span>
         <span>Довжина панелі: <b style={{color: LENGTH_COLOR}}>{length.toFixed(2)}м</b></span>
       </div>
       <img src={image} alt="result" style={{width: '100%', height: '100%'}}/>
