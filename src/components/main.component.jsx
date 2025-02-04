@@ -49,7 +49,7 @@ export const MainComponent = () => {
                     e.preventDefault();
                   }
                 }}
-                style={{ width: '140px' }}
+                style={{ width: '170px' }}
                 placeholder="кут нахилу криші"
               />
               <span style={{ fontSize: '12px', marginTop: '2px' }}>1 - 360, без знаків</span>
