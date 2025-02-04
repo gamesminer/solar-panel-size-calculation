@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import image from "./result.jpg";
 
 const RED_COLOR = '#c13939';
@@ -10,14 +10,12 @@ const STEP_2 = 33;
 const moveToRadians = (degrees) => degrees * Math.PI / 180;
 
 export const ResultComponent = ({ corner, length }) => {
-  const fixedLength = useMemo(() => parseFloat(length).toFixed(2), [length]);
-
   const step2 = 37 - corner;
   const step3 = 90 - step2;
   const step4 = 180 - 57 - step3;
   const step5 = 90 - step4;
-  const step7 = parseFloat(parseFloat(length) * Math.sin(moveToRadians(step2))).toFixed(2);
-  const step9 = parseFloat(parseFloat(length) * Math.cos(moveToRadians(step2))).toFixed(2)
+  const step7 = parseFloat(length * Math.sin(moveToRadians(step2))).toFixed(2);
+  const step9 = parseFloat(length * Math.cos(moveToRadians(step2))).toFixed(2)
   const step11 = parseFloat(step7 * Math.tan(moveToRadians(step4))).toFixed(2);
 
   return (
@@ -25,7 +23,7 @@ export const ResultComponent = ({ corner, length }) => {
       <div
         style={{position: 'absolute', left: 0, top: 0, display: 'flex', flexDirection: 'column', alignItems: 'start'}}>
         <span>Кут нахилу: <b style={{color: RED_COLOR}}>{corner}°</b></span>
-        <span>Довжина панелі: <b style={{color: LENGTH_COLOR}}>{fixedLength}м</b></span>
+        <span>Довжина панелі: <b style={{color: LENGTH_COLOR}}>{length.toFixed(2)}м</b></span>
       </div>
       <img src={image} alt="result" style={{width: '100%', height: '100%'}}/>
 
@@ -36,7 +34,7 @@ export const ResultComponent = ({ corner, length }) => {
       <b style={{position: 'absolute', top: '125px', right: '275px', color: RED_COLOR}}>{step3}°</b>
       <b style={{position: 'absolute', top: '122px', right: '330px', color: RED_COLOR}}>{step4}°</b>
       <b style={{position: 'absolute', top: '150px', right: '455px', color: RED_COLOR}}>{step5}°</b>
-      <b style={{position: 'absolute', top: '150px', left: '800px', color: LENGTH_COLOR}}>{fixedLength}</b>
+      <b style={{position: 'absolute', top: '150px', left: '800px', color: LENGTH_COLOR}}>{length.toFixed(2)}</b>
       <b style={{position: 'absolute', top: '150px', right: '330px', color: LENGTH_COLOR}}>{step7}</b>
       <b style={{position: 'absolute', bottom: '5px', left: '720px', color: LENGTH_COLOR}}>{step9}</b>
       <b style={{position: 'absolute', bottom: '65px', left: '490px', color: LENGTH_COLOR}}>{step11}</b>
