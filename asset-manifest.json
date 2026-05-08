@@ -1,14 +1,13 @@
 {
   "files": {
-    "main.css": "/solar-panel-size-calculation/static/css/main.562c155e.css",
-    "main.js": "/solar-panel-size-calculation/static/js/main.da3054b4.js",
-    "static/media/result.jpg": "/solar-panel-size-calculation/static/media/result.44deb2d72ead266b0a54.jpg",
+    "main.css": "/solar-panel-size-calculation/static/css/main.d22e704b.css",
+    "main.js": "/solar-panel-size-calculation/static/js/main.9ab5d4ce.js",
     "index.html": "/solar-panel-size-calculation/index.html",
-    "main.562c155e.css.map": "/solar-panel-size-calculation/static/css/main.562c155e.css.map",
-    "main.da3054b4.js.map": "/solar-panel-size-calculation/static/js/main.da3054b4.js.map"
+    "main.d22e704b.css.map": "/solar-panel-size-calculation/static/css/main.d22e704b.css.map",
+    "main.9ab5d4ce.js.map": "/solar-panel-size-calculation/static/js/main.9ab5d4ce.js.map"
   },
   "entrypoints": [
-    "static/css/main.562c155e.css",
-    "static/js/main.da3054b4.js"
+    "static/css/main.d22e704b.css",
+    "static/js/main.9ab5d4ce.js"
   ]
 }
