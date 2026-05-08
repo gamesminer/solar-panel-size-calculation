@@ -9,23 +9,25 @@ const GroundDiagram = ({ height, angle, h, d1, d2 }) => {
   const SVG_W = 620;
   const SVG_H = 240;
   const PAD_L = 40;
-  const PAD_R = 150;
+  const PAD_R = 30;
   const PAD_T = 36;
   const PAD_B = 52;
 
   const drawW = SVG_W - PAD_L - PAD_R;
   const drawH = SVG_H - PAD_T - PAD_B;
-  const scale = Math.min(drawW / ((d1 + d2) || 1), drawH / (h || 1));
+  const scaleX = drawW / ((d1 + d2) || 1);
+  const scaleY = drawH / (h || 1);
+  const scale = Math.min(scaleX, scaleY);
 
-  const ox = PAD_L;
   const oy = PAD_T + drawH;
 
-  const Bx = ox + (d2 + d1) * scale;
+  // S anchored to left, B computed from total width
+  const Sx = PAD_L;
+  const Sy = oy;
+  const Bx = Sx + (d1 + d2) * scale;
   const By = oy;
   const Tx = Bx - d1 * scale;
   const Ty = oy - h * scale;
-  const Sx = ox;
-  const Sy = oy;
 
   // Sun ray: from Sx (shadow tip on horizon) to Tx,Ty (panel top) — exactly between the two points
   const RayStartX = Sx;
@@ -40,18 +42,21 @@ const GroundDiagram = ({ height, angle, h, d1, d2 }) => {
 
   const PMx = (Tx + Bx) / 2;
   const PMy = (Ty + By) / 2;
-  const calloutX = Bx + 14;
-  const calloutTextX = calloutX + 8;
 
-  const arcR = 26;
+  const arcR = 90;
   const arcEndX = Bx - arcR * Math.cos(toRad(angle));
   const arcEndY = By - arcR * Math.sin(toRad(angle));
+  // value label: left of arc, at bisector angle
+  const arcMid = angle / 2;
+  const arcValR = arcR + 16;
+  const arcValX = Bx - arcValR * Math.cos(toRad(arcMid));
+  const arcValY = By - arcValR * Math.sin(toRad(arcMid));
   const arrowY = oy + 20;
   const mid = (a, b) => (a + b) / 2;
 
   return (
     <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: SVG_W, display: 'block' }}>
+      style={{ width: '100%', display: 'block' }}>
       <defs>
         <marker id="arr" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
           <path d="M0,0 L0,7 L7,3.5 z" fill={RED} />
@@ -77,39 +82,31 @@ const GroundDiagram = ({ height, angle, h, d1, d2 }) => {
       {/* Dashed base */}
       <line x1={Tx} y1={oy} x2={Bx} y2={oy} stroke={GRAY} strokeWidth="0.7" strokeDasharray="4,3" />
 
-      {/* h: label above T with leader line to value */}
-      <text x={Tx - 6} y={Ty - 12} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="end">h</text>
-      <line x1={Tx - 12} y1={Ty - 7} x2={Tx - 12} y2={mid(Ty, oy) - 4}
-        stroke={GRAY} strokeWidth="0.8" />
-      <text x={Tx - 10} y={mid(Ty, oy) + 5} fontSize="13" fill={CYAN} fontWeight="bold" textAnchor="end">{h}</text>
+      {/* h: value only, left of cyan line */}
+      <text x={Tx - 10} y={mid(Ty, oy) + 5} fontSize="13" fill={CYAN} fontWeight="bold" textAnchor="end">{h}м</text>
 
-      {/* Callout: висота панелі — raised higher */}
-      <line x1={PMx} y1={PMy} x2={calloutX} y2={PMy - 20} stroke={GRAY} strokeWidth="0.8" />
-      <text x={calloutTextX} y={PMy - 28} fontSize="11" fill={GRAY} textAnchor="start">висота панелі</text>
-      <text x={calloutTextX} y={PMy - 13} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="start">{height}</text>
+      {/* висота панелі: value along panel midpoint */}
+      <text x={PMx + 8} y={PMy - 10} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="middle">{height}м</text>
 
-      {/* Angle arc — larger radius for visibility */}
+      {/* Angle arc: value left of arc at bisector */}
       <path d={`M ${Bx - arcR},${By} A ${arcR},${arcR} 0 0,0 ${arcEndX},${arcEndY}`}
         fill="none" stroke={GRAY} strokeWidth="1" />
-      {/* кут панелі callout: label above, value below */}
-      <text x={Bx + 14} y={By - 44} fontSize="11" fill={GRAY} textAnchor="start">кут панелі</text>
-      <text x={Bx + 14} y={By - 28} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="start">{angle}°</text>
-      <line x1={Bx + 12} y1={By - 40} x2={Bx - arcR + 4} y2={By - 16} stroke={GRAY} strokeWidth="0.7" />
+      <text x={arcValX - 4} y={arcValY + 5} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="end">{angle}°</text>
+
+      {/* vertical tick lines from each key point */}
+      <line x1={Sx} y1={oy} x2={Sx} y2={oy + 32} stroke={RED} strokeWidth="1" />
+      <line x1={Tx} y1={oy} x2={Tx} y2={oy + 32} stroke={RED} strokeWidth="1" />
+      <line x1={Bx} y1={oy} x2={Bx} y2={oy + 32} stroke={RED} strokeWidth="1" />
 
       {/* d2 */}
-      <line x1={Sx} y1={oy + 10} x2={Sx} y2={oy + 30} stroke={RED} strokeWidth="1" />
-      <line x1={Tx} y1={oy + 10} x2={Tx} y2={oy + 30} stroke={RED} strokeWidth="1" />
       <line x1={Sx + 1} y1={arrowY} x2={Tx - 1} y2={arrowY} stroke={RED} strokeWidth="1.5"
         markerStart="url(#arrL)" markerEnd="url(#arr)" />
-      <text x={mid(Sx, Tx)} y={arrowY - 4} fontSize="13" fill={RED} fontWeight="bold" textAnchor="middle">{d2}</text>
-      <text x={mid(Sx, Tx)} y={arrowY + 14} fontSize="11" fill={RED} textAnchor="middle">d2</text>
+      <text x={mid(Sx, Tx)} y={arrowY - 4} fontSize="13" fill={RED} fontWeight="bold" textAnchor="middle">{d2}м</text>
 
       {/* d1 */}
-      <line x1={Bx} y1={oy + 10} x2={Bx} y2={oy + 30} stroke={RED} strokeWidth="1" />
       <line x1={Tx + 1} y1={arrowY} x2={Bx - 1} y2={arrowY} stroke={RED} strokeWidth="1.5"
         markerStart="url(#arrL)" markerEnd="url(#arr)" />
-      <text x={mid(Tx, Bx)} y={arrowY - 4} fontSize="13" fill={RED} fontWeight="bold" textAnchor="middle">{d1}</text>
-      <text x={mid(Tx, Bx)} y={arrowY + 14} fontSize="11" fill={RED} textAnchor="middle">d1</text>
+      <text x={mid(Tx, Bx)} y={arrowY - 4} fontSize="13" fill={RED} fontWeight="bold" textAnchor="middle">{d1}м</text>
     </svg>
   );
 };
@@ -130,22 +127,24 @@ const GroundDiagram = ({ height, angle, h, d1, d2 }) => {
 //  кут1 label: right-side callout above кут криші
 // ─────────────────────────────────────────────────────────────
 const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
-  const SVG_W = 720;
-  const SVG_H = 320;
-
   const PAD_L = 20;
-  const PAD_R = 175;  // space for right callouts
-  const PAD_T = 70;   // space above for sun ray
-  const PAD_B = 80;   // space below for dimension arrows + кут криші label
+  const PAD_R = 30;
+  const PAD_T = 70;
+  const PAD_B = 80;
 
+  // Always scale to fill full width
+  const SVG_W = 720;
   const drawW = SVG_W - PAD_L - PAD_R;
-  const drawH = SVG_H - PAD_T - PAD_B;
-  const scale = Math.min(drawW / ((d1 + d2) || 1), drawH / (h || 1));
+  const scale = drawW / ((d1 + d2) || 1);
+
+  // Compute needed height dynamically
+  const drawH = h * scale;
+  const SVG_H = drawH + PAD_T + PAD_B;
 
   // Horizon y-coordinate
   const hy = PAD_T + drawH;
 
-  // B: bottom-right anchor, on horizon
+  // S anchored to left, B computed from S + total width
   const Bx = PAD_L + (d1 + d2) * scale;
   const By = hy;
 
@@ -194,6 +193,9 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
   const tRoof = (Tx - Bx) / (RFx - Bx || 0.001);
   const RoofAtTx = By + tRoof * (RFy - By); // y of roof directly under T
 
+  // y on roof line at Bx = By (B is the anchor, roof starts here)
+  const RoofAtBx = By;
+
   // Sun ray: from horizon (Sx,hy) through T and continuing up-right
   // Direction S→T extended until it goes well above the SVG top
   const rdx = _rdx;
@@ -215,13 +217,9 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
   const arrowY = By + 26;
   const mid = (a, b) => (a + b) / 2;
 
-  // Right-side callout x positions
-  const calloutAnchorX = Bx + 14;
-  const calloutTextX   = Bx + 22;
-
   // Arc radii
-  const arcRoof = 110; // outer: кут криші
-  const arcKut1 = 75;  // inner: кут1
+  const arcRoof = 180; // outer: кут криші
+  const arcKut1 = 130; // inner: кут1
 
   // кут криші arc (horizon left → roof direction)
   const roofArcEx = Bx - arcRoof * Math.cos(toRad(roofAngle));
@@ -233,24 +231,13 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
   const kut1Ex = Bx - arcKut1 * Math.cos(toRad(panelAngle));
   const kut1Ey = By - arcKut1 * Math.sin(toRad(panelAngle));
 
-  // кут1 value label: along bisector between roofAngle & panelAngle (used for arc line endpoint)
-  const kut1Mid = (roofAngle + panelAngle) / 2;
-  const kut1LR  = arcKut1 + 14;
-  const kut1ValX = Bx - kut1LR * Math.cos(toRad(kut1Mid));
-  const kut1ValY = By - kut1LR * Math.sin(toRad(kut1Mid));
-
-  // кут криші label: place well BELOW horizon line, below the d1/d2 arrow row
-  const roofMid = roofAngle / 2;
-  const kutLabelX = Bx - arcRoof * Math.cos(toRad(roofMid / 2));
-  const kutLabelY = By + 44; // below the red arrow line
-
   // висота панелі callout: from panel midpoint → right
   const PMx = mid(Tx, Bx);
   const PMy = mid(Ty, By);
 
   return (
     <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} xmlns="http://www.w3.org/2000/svg"
-      style={{ width: '100%', maxWidth: SVG_W, display: 'block' }}>
+      style={{ width: '100%', display: 'block' }}>
       <defs>
         <marker id="arr2" markerWidth="7" markerHeight="7" refX="3.5" refY="3.5" orient="auto">
           <path d="M0,0 L0,7 L7,3.5 z" fill={RED} />
@@ -264,9 +251,13 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
       <line x1={Sx - 18} y1={hy} x2={Bx + 18} y2={hy}
         stroke={GRAY} strokeWidth="1.2" strokeDasharray="7,4" />
 
-      {/* ── Roof (green, behind panel) — extended to touch sun ray ── */}
-      <line x1={Bx} y1={By} x2={RoofExtX} y2={RoofExtY}
-        stroke={ROOF} strokeWidth="9" strokeLinecap="round" />
+      {/* ── Roof (green, behind panel) — extended past sun ray intersection ── */}
+      {(() => {
+        const extraDx = (RoofExtX - Bx) / Math.sqrt((RoofExtX-Bx)**2+(RoofExtY-By)**2);
+        const extraDy = (RoofExtY - By) / Math.sqrt((RoofExtX-Bx)**2+(RoofExtY-By)**2);
+        return <line x1={Bx} y1={By} x2={RoofExtX + extraDx * 18} y2={RoofExtY + extraDy * 18}
+          stroke={ROOF} strokeWidth="9" strokeLinecap="round" />;
+      })()}
 
       {/* ── Sun ray: from horizon (shadow tip S) through T and continuing up-right ── */}
       <line x1={RayStartX} y1={RayStartY} x2={RayEndX} y2={RayEndY}
@@ -283,67 +274,52 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
       {/* ── Red ground line S→B ── */}
       <line x1={Sx} y1={hy} x2={Bx} y2={hy} stroke={RED} strokeWidth="1.8" />
 
-      {/* ── h: "h" label above T, leader line from "h" down to the cyan value ── */}
-      <text x={Tx - 6} y={Ty - 18}
-        fontSize="14" fill={GRAY} fontWeight="bold" textAnchor="end">h</text>
-      {/* cyan value — at midpoint of cyan line, left */}
-      <text x={Tx - 6} y={mid(Ty, RoofAtTx) + 5}
-        fontSize="14" fill={CYAN} fontWeight="bold" textAnchor="end">{h}</text>
-      {/* leader line from bottom of "h" label to top of value */}
-      <line x1={Tx - 12} y1={Ty - 12} x2={Tx - 12} y2={mid(Ty, RoofAtTx) - 4}
-        stroke={GRAY} strokeWidth="0.8" />
+      {/* ── h: value left of cyan line, at midpoint ── */}
+      <text x={Tx - 8} y={mid(Ty, RoofAtTx) + 5}
+        fontSize="14" fill={CYAN} fontWeight="bold" textAnchor="end">{h}м</text>
 
-      {/* ── Callout: висота панелі ── */}
-      <line x1={PMx} y1={PMy} x2={calloutAnchorX} y2={PMy - 20}
-        stroke={GRAY} strokeWidth="0.9" />
-      <text x={calloutTextX} y={PMy - 28}
-        fontSize="12" fill={GRAY} textAnchor="start">висота панелі</text>
-      <text x={calloutTextX} y={PMy - 11}
-        fontSize="14" fill={GRAY} fontWeight="bold" textAnchor="start">{height}</text>
+      {/* ── висота панелі: value along panel midpoint ── */}
+      <text x={PMx + 8} y={PMy - 10}
+        fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="middle">{height}м</text>
 
-      {/* ── Arc: кут криші (horizon → roof) ── */}
+      {/* ── Arc: кут криші — value left of arc at bisector ── */}
       <path d={`M ${Bx - arcRoof},${By} A ${arcRoof},${arcRoof} 0 0,0 ${roofArcEx},${roofArcEy}`}
         fill="none" stroke={GRAY} strokeWidth="1.3" />
-      {/* leader line from arc midpoint to label below */}
-      <line x1={kutLabelX} y1={By + 4} x2={kutLabelX} y2={kutLabelY - 2}
-        stroke={GRAY} strokeWidth="0.8" />
-      {/* кут криші label: BELOW horizon */}
-      <text x={kutLabelX} y={kutLabelY + 2}
-        fontSize="11" fill={GRAY} textAnchor="middle">кут криші</text>
-      <text x={kutLabelX} y={kutLabelY + 17}
-        fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="middle">{roofAngle}°</text>
+      {(() => {
+        const bisR = roofAngle / 2;
+        const vr = arcRoof + 16;
+        return <text x={Bx - vr * Math.cos(toRad(bisR)) - 4} y={By - vr * Math.sin(toRad(bisR)) + 5}
+          fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="end">{roofAngle}°</text>;
+      })()}
 
-      {/* ── Arc: кут1 (roof → panel) ── */}
+      {/* ── Arc: кут1 — value left of arc at bisector ── */}
       <path d={`M ${kut1Sx},${kut1Sy} A ${arcKut1},${arcKut1} 0 0,0 ${kut1Ex},${kut1Ey}`}
         fill="none" stroke={GRAY} strokeWidth="1.3" />
-      {/* кут1 callout: label "кут1" then value below it — positioned below "висота панелі" callout */}
-      <line x1={calloutAnchorX} y1={PMy + 28} x2={kut1ValX + 8} y2={kut1ValY - 2}
-        stroke={GRAY} strokeWidth="0.8" />
-      <text x={calloutTextX} y={PMy + 28}
-        fontSize="12" fill={GRAY} textAnchor="start">кут1</text>
-      <text x={calloutTextX} y={PMy + 44}
-        fontSize="14" fill={GRAY} fontWeight="bold" textAnchor="start">{angle1}°</text>
+      {(() => {
+        const bisA = (roofAngle + panelAngle) / 2;
+        const vr = arcKut1 + 16;
+        return <text x={Bx - vr * Math.cos(toRad(bisA)) - 4} y={By - vr * Math.sin(toRad(bisA)) + 5}
+          fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="end">{angle1}°</text>;
+      })()}
 
-      {/* ── d2: S → T ── */}
-      <line x1={Sx} y1={By + 12} x2={Sx} y2={By + 36} stroke={RED} strokeWidth="1" />
-      <line x1={Tx} y1={By + 12} x2={Tx} y2={By + 36} stroke={RED} strokeWidth="1" />
-      <line x1={Sx + 1} y1={arrowY} x2={Tx - 1} y2={arrowY}
+      {/* ── vertical tick lines from green roof line down to arrow row ── */}
+      <line x1={RoofExtX} y1={RoofExtY} x2={RoofExtX} y2={By + 38} stroke={RED} strokeWidth="1" />
+      <line x1={Tx}       y1={RoofAtTx}   x2={Tx}       y2={By + 38} stroke={RED} strokeWidth="1" />
+      <line x1={Bx}       y1={RoofAtBx}   x2={Bx}       y2={By + 38} stroke={RED} strokeWidth="1" />
+
+      {/* ── d2: from RoofExtX to Tx ── */}
+      <line x1={RoofExtX + 1} y1={arrowY} x2={Tx - 1} y2={arrowY}
         stroke={RED} strokeWidth="1.8"
         markerStart="url(#arrL2)" markerEnd="url(#arr2)" />
-      <text x={mid(Sx, Tx)} y={arrowY - 7}
-        fontSize="14" fill={RED} fontWeight="bold" textAnchor="middle">{d2}</text>
-      <text x={mid(Sx, Tx)} y={arrowY + 17}
-        fontSize="12" fill={RED} textAnchor="middle">d2</text>
+      <text x={mid(RoofExtX, Tx)} y={arrowY - 4}
+        fontSize="14" fill={RED} fontWeight="bold" textAnchor="middle">{d2}м</text>
 
-      {/* ── d1: T → B ── */}
-      <line x1={Bx} y1={By + 12} x2={Bx} y2={By + 36} stroke={RED} strokeWidth="1" />
+      {/* ── d1: from Tx to Bx ── */}
       <line x1={Tx + 1} y1={arrowY} x2={Bx - 1} y2={arrowY}
         stroke={RED} strokeWidth="1.8"
         markerStart="url(#arrL2)" markerEnd="url(#arr2)" />
-      <text x={mid(Tx, Bx)} y={arrowY - 7}
-        fontSize="14" fill={RED} fontWeight="bold" textAnchor="middle">{d1}</text>
-      <text x={mid(Tx, Bx)} y={arrowY + 17}
-        fontSize="12" fill={RED} textAnchor="middle">d1</text>
+      <text x={mid(Tx, Bx)} y={arrowY - 4}
+        fontSize="14" fill={RED} fontWeight="bold" textAnchor="middle">{d1}м</text>
     </svg>
   );
 };
@@ -397,7 +373,7 @@ export const ResultComponent = ({ panelHeight, panelAngle, onRoof, roofAngle, on
       <div className="result-values">
         <div className="result-row">
           <span className="result-key">Висота панелі:</span>
-          <span className="result-val">{height} м</span>
+          <span className="result-val">{height}м</span>
         </div>
         <div className="result-row">
           <span className="result-key">Кут нахилу панелі:</span>
@@ -413,20 +389,20 @@ export const ResultComponent = ({ panelHeight, panelAngle, onRoof, roofAngle, on
         <div className="result-divider" />
 
         {onRoof && <div className="result-row">
-          <span className="result-key">Кут1 (панель − криша):</span>
+          <div className="result-key">Кут1 <span className="formula-row">(кут панелі − кут криші)</span>:</div>
           <span className="result-val">{angle1}°</span>
         </div>}
         <div className="result-row">
-          <span className="result-key">h:</span>
-          <span className="result-val cyan">{h} м</span>
+          <div className="result-key">h <span className="formula-row">(висота × sin(кут1))</span>:</div>
+          <span className="result-val cyan">{h}м</span>
         </div>
         <div className="result-row">
-          <span className="result-key">d1:</span>
-          <span className="result-val red">{d1} м</span>
+          <div className="result-key">d1 <span className="formula-row">(висота × cos(кут1))</span>:</div>
+          <span className="result-val red">{d1}м</span>
         </div>
         <div className="result-row">
-          <span className="result-key">d2:</span>
-          <span className="result-val red">{d2} м</span>
+          <div className="result-key">d2 <span className="formula-row">(h / tan(28° + кут криші))</span>:</div>
+          <span className="result-val red">{d2}м</span>
         </div>
       </div>
 

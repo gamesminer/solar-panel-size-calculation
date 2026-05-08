@@ -198,7 +198,7 @@ body {
   align-items: center;
   gap: 20px;
   width: 100%;
-  max-width: 600px;
+  max-width: 820px;
 }
 
 .diagram-box {
@@ -264,6 +264,22 @@ body {
 
 .result-wrapper > .btn-reset:hover {
   background-color: #d4904a;
+}
+
+/* ── Formulas block ── */
+.result-formulas {
+  background: #fff;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  padding: 10px 16px;
+  width: 100%;
+}
+
+.formula-row {
+  font-size: 13px;
+  color: #444;
+  padding: 3px 0;
+  font-family: monospace;
 }
 
 /* ── Mobile tweaks ── */
