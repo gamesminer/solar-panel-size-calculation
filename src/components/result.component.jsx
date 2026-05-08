@@ -27,12 +27,11 @@ const GroundDiagram = ({ height, angle, h, d1, d2 }) => {
   const Sx = ox;
   const Sy = oy;
 
-  const rayDX = Sx - Tx;
-  const rayDY = Sy - Ty;
-  const rayLen = Math.sqrt(rayDX * rayDX + rayDY * rayDY);
-  const ru = { x: rayDX / rayLen, y: rayDY / rayLen };
-  const RayEndX = Sx - ru.x * 28;
-  const RayEndY = Sy - ru.y * 28;
+  // Sun ray: from Sx (shadow tip on horizon) to Tx,Ty (panel top) — exactly between the two points
+  const RayStartX = Sx;
+  const RayStartY = Sy;
+  const RayEndX = Tx;
+  const RayEndY = Ty;
 
   const RED  = '#d32f2f';
   const CYAN = '#00b0c8';
@@ -62,8 +61,8 @@ const GroundDiagram = ({ height, angle, h, d1, d2 }) => {
         </marker>
       </defs>
 
-      {/* Sun ray */}
-      <line x1={Tx} y1={Ty} x2={RayEndX} y2={RayEndY}
+      {/* Sun ray — from past Sx through T, crosses horizon */}
+      <line x1={RayStartX} y1={RayStartY} x2={RayEndX} y2={RayEndY}
         stroke="#e6c800" strokeWidth="2" strokeDasharray="8,5" />
 
       {/* Ground */}
@@ -78,21 +77,24 @@ const GroundDiagram = ({ height, angle, h, d1, d2 }) => {
       {/* Dashed base */}
       <line x1={Tx} y1={oy} x2={Bx} y2={oy} stroke={GRAY} strokeWidth="0.7" strokeDasharray="4,3" />
 
-      {/* h value */}
+      {/* h: label above T with leader line to value */}
+      <text x={Tx - 6} y={Ty - 12} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="end">h</text>
+      <line x1={Tx - 12} y1={Ty - 7} x2={Tx - 12} y2={mid(Ty, oy) - 4}
+        stroke={GRAY} strokeWidth="0.8" />
       <text x={Tx - 10} y={mid(Ty, oy) + 5} fontSize="13" fill={CYAN} fontWeight="bold" textAnchor="end">{h}</text>
-      <text x={Tx} y={Ty - 8} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="middle">h</text>
 
-      {/* Callout: висота панелі */}
-      <line x1={PMx} y1={PMy} x2={calloutX} y2={PMy} stroke={GRAY} strokeWidth="0.8" />
-      <text x={calloutTextX} y={PMy - 10} fontSize="11" fill={GRAY} textAnchor="start">висота панелі</text>
-      <text x={calloutTextX} y={PMy + 5} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="start">{height}</text>
+      {/* Callout: висота панелі — raised higher */}
+      <line x1={PMx} y1={PMy} x2={calloutX} y2={PMy - 20} stroke={GRAY} strokeWidth="0.8" />
+      <text x={calloutTextX} y={PMy - 28} fontSize="11" fill={GRAY} textAnchor="start">висота панелі</text>
+      <text x={calloutTextX} y={PMy - 13} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="start">{height}</text>
 
-      {/* Angle arc */}
+      {/* Angle arc — larger radius for visibility */}
       <path d={`M ${Bx - arcR},${By} A ${arcR},${arcR} 0 0,0 ${arcEndX},${arcEndY}`}
         fill="none" stroke={GRAY} strokeWidth="1" />
-      <text x={Bx - arcR - 14} y={By - 10} fontSize="12" fill={GRAY} fontWeight="bold" textAnchor="middle">{angle}</text>
-      <text x={Bx + 14} y={By - 28} fontSize="11" fill={GRAY} textAnchor="start">кут панелі</text>
-      <line x1={Bx + 12} y1={By - 24} x2={Bx - 16} y2={By - 12} stroke={GRAY} strokeWidth="0.7" />
+      {/* кут панелі callout: label above, value below */}
+      <text x={Bx + 14} y={By - 44} fontSize="11" fill={GRAY} textAnchor="start">кут панелі</text>
+      <text x={Bx + 14} y={By - 28} fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="start">{angle}°</text>
+      <line x1={Bx + 12} y1={By - 40} x2={Bx - arcR + 4} y2={By - 16} stroke={GRAY} strokeWidth="0.7" />
 
       {/* d2 */}
       <line x1={Sx} y1={oy + 10} x2={Sx} y2={oy + 30} stroke={RED} strokeWidth="1" />
@@ -155,10 +157,36 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
   const Sx = Tx - d2 * scale;
   const Sy = hy;
 
-  // Roof line: from B at roofAngle upward-left, same length as panel
+  // Roof line: from B at roofAngle upward-left, extended to touch the sun ray line
+  // Sun ray line: parametric Sx + t*(RayEnd-Sx). Find intersection with roof direction from B.
+  // We extend the roof far enough to guarantee it intersects the ray.
   const roofLen = height * scale * 1.05;
   const RFx = Bx - roofLen * Math.cos(toRad(roofAngle));
   const RFy = By - roofLen * Math.sin(toRad(roofAngle));
+  // Intersection of roof ray from B and sun ray from Sx:
+  // B + t*(RF-B)/|RF-B| * s == Sx + u*(T-Sx)/|T-Sx| * r  → solve for s
+  // Using line intersection formula:
+  // Roof direction unit: (RFx-Bx, RFy-By) / roofLen
+  const roofDx = (RFx - Bx) / roofLen;
+  const roofDy = (RFy - By) / roofLen;
+  // Ray direction: rdx/rLen, rdy/rLen (defined below, need to pre-calc here)
+  const _rdx = Tx - Sx;
+  const _rdy = Ty - Sy;
+  const _rLen = Math.sqrt(_rdx * _rdx + _rdy * _rdy);
+  const rayDirX = _rdx / _rLen;
+  const rayDirY = _rdy / _rLen;
+  // Solve: Bx + s*roofDx = Sx + u*rayDirX, By + s*roofDy = Sy + u*rayDirY
+  // s = ((Sx-Bx)*rayDirY - (Sy-By)*rayDirX) / (roofDx*rayDirY - roofDy*rayDirX)
+  const denom = roofDx * rayDirY - roofDy * rayDirX;
+  let RoofExtX = RFx;
+  let RoofExtY = RFy;
+  if (Math.abs(denom) > 0.0001) {
+    const s = ((Sx - Bx) * rayDirY - (Sy - By) * rayDirX) / denom;
+    if (s > 0) {
+      RoofExtX = Bx + s * roofDx;
+      RoofExtY = By + s * roofDy;
+    }
+  }
 
   // Point where the vertical from T meets the ROOF LINE
   // Roof line parametric: P(t) = B + t*(RF-B)
@@ -166,13 +194,18 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
   const tRoof = (Tx - Bx) / (RFx - Bx || 0.001);
   const RoofAtTx = By + tRoof * (RFy - By); // y of roof directly under T
 
-  // Sun ray: from T going up-RIGHT (continuation of shadow ray direction)
-  // Shadow direction: S→T (right and up). Ray continues T away from S.
-  const rdx = Tx - Sx;
-  const rdy = Ty - Sy;
-  const rLen = Math.sqrt(rdx * rdx + rdy * rdy);
-  const RayEndX = Tx + (rdx / rLen) * 130;
-  const RayEndY = Ty + (rdy / rLen) * 130;
+  // Sun ray: from horizon (Sx,hy) through T and continuing up-right
+  // Direction S→T extended until it goes well above the SVG top
+  const rdx = _rdx;
+  const rdy = _rdy;
+  const rLen = _rLen;
+  // Extend far enough upward so it visually exits the diagram
+  const rayExtend = 250;
+  const RayEndX = Tx + (rdx / rLen) * rayExtend;
+  const RayEndY = Ty + (rdy / rLen) * rayExtend;
+  // Ray starts at Sx (shadow tip on horizon) and goes through T and beyond
+  const RayStartX = Sx;
+  const RayStartY = hy;
 
   const RED  = '#d32f2f';
   const CYAN = '#00b0c8';
@@ -187,8 +220,8 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
   const calloutTextX   = Bx + 22;
 
   // Arc radii
-  const arcRoof = 54; // outer: кут криші
-  const arcKut1 = 32; // inner: кут1
+  const arcRoof = 110; // outer: кут криші
+  const arcKut1 = 75;  // inner: кут1
 
   // кут криші arc (horizon left → roof direction)
   const roofArcEx = Bx - arcRoof * Math.cos(toRad(roofAngle));
@@ -200,16 +233,16 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
   const kut1Ex = Bx - arcKut1 * Math.cos(toRad(panelAngle));
   const kut1Ey = By - arcKut1 * Math.sin(toRad(panelAngle));
 
-  // кут1 value label: along bisector between roofAngle & panelAngle
+  // кут1 value label: along bisector between roofAngle & panelAngle (used for arc line endpoint)
   const kut1Mid = (roofAngle + panelAngle) / 2;
   const kut1LR  = arcKut1 + 14;
   const kut1ValX = Bx - kut1LR * Math.cos(toRad(kut1Mid));
   const kut1ValY = By - kut1LR * Math.sin(toRad(kut1Mid));
 
-  // кут криші label: place BELOW horizon, centered along bisector angle
+  // кут криші label: place well BELOW horizon line, below the d1/d2 arrow row
   const roofMid = roofAngle / 2;
-  const kutLabelX = Bx - (arcRoof + 10) * Math.cos(toRad(roofMid));
-  const kutLabelY = By + (arcRoof + 10) * Math.sin(toRad(roofMid)); // below horizon
+  const kutLabelX = Bx - arcRoof * Math.cos(toRad(roofMid / 2));
+  const kutLabelY = By + 44; // below the red arrow line
 
   // висота панелі callout: from panel midpoint → right
   const PMx = mid(Tx, Bx);
@@ -231,12 +264,12 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
       <line x1={Sx - 18} y1={hy} x2={Bx + 18} y2={hy}
         stroke={GRAY} strokeWidth="1.2" strokeDasharray="7,4" />
 
-      {/* ── Roof (green, behind panel) ── */}
-      <line x1={Bx} y1={By} x2={RFx} y2={RFy}
+      {/* ── Roof (green, behind panel) — extended to touch sun ray ── */}
+      <line x1={Bx} y1={By} x2={RoofExtX} y2={RoofExtY}
         stroke={ROOF} strokeWidth="9" strokeLinecap="round" />
 
-      {/* ── Sun ray: from T going up-right, long dashed yellow ── */}
-      <line x1={Tx} y1={Ty} x2={RayEndX} y2={RayEndY}
+      {/* ── Sun ray: from horizon (shadow tip S) through T and continuing up-right ── */}
+      <line x1={RayStartX} y1={RayStartY} x2={RayEndX} y2={RayEndY}
         stroke="#e6c800" strokeWidth="2.5" strokeDasharray="10,6" />
 
       {/* ── Cyan vertical: T → point on ROOF (not horizon) ── */}
@@ -250,40 +283,46 @@ const RoofDiagram = ({ height, panelAngle, roofAngle, angle1, h, d1, d2 }) => {
       {/* ── Red ground line S→B ── */}
       <line x1={Sx} y1={hy} x2={Bx} y2={hy} stroke={RED} strokeWidth="1.8" />
 
-      {/* ── h: value left of cyan, "h" label upper-left of T ── */}
-      <text x={Tx - 10} y={mid(Ty, RoofAtTx) + 5}
-        fontSize="14" fill={CYAN} fontWeight="bold" textAnchor="end">{h}</text>
-      <text x={Tx - 14} y={Ty - 6}
+      {/* ── h: "h" label above T, leader line from "h" down to the cyan value ── */}
+      <text x={Tx - 6} y={Ty - 18}
         fontSize="14" fill={GRAY} fontWeight="bold" textAnchor="end">h</text>
+      {/* cyan value — at midpoint of cyan line, left */}
+      <text x={Tx - 6} y={mid(Ty, RoofAtTx) + 5}
+        fontSize="14" fill={CYAN} fontWeight="bold" textAnchor="end">{h}</text>
+      {/* leader line from bottom of "h" label to top of value */}
+      <line x1={Tx - 12} y1={Ty - 12} x2={Tx - 12} y2={mid(Ty, RoofAtTx) - 4}
+        stroke={GRAY} strokeWidth="0.8" />
 
       {/* ── Callout: висота панелі ── */}
-      <line x1={PMx} y1={PMy} x2={calloutAnchorX} y2={PMy}
+      <line x1={PMx} y1={PMy} x2={calloutAnchorX} y2={PMy - 20}
         stroke={GRAY} strokeWidth="0.9" />
-      <text x={calloutTextX} y={PMy - 8}
+      <text x={calloutTextX} y={PMy - 28}
         fontSize="12" fill={GRAY} textAnchor="start">висота панелі</text>
-      <text x={calloutTextX} y={PMy + 9}
+      <text x={calloutTextX} y={PMy - 11}
         fontSize="14" fill={GRAY} fontWeight="bold" textAnchor="start">{height}</text>
 
       {/* ── Arc: кут криші (horizon → roof) ── */}
       <path d={`M ${Bx - arcRoof},${By} A ${arcRoof},${arcRoof} 0 0,0 ${roofArcEx},${roofArcEy}`}
         fill="none" stroke={GRAY} strokeWidth="1.3" />
+      {/* leader line from arc midpoint to label below */}
+      <line x1={kutLabelX} y1={By + 4} x2={kutLabelX} y2={kutLabelY - 2}
+        stroke={GRAY} strokeWidth="0.8" />
       {/* кут криші label: BELOW horizon */}
       <text x={kutLabelX} y={kutLabelY + 2}
         fontSize="11" fill={GRAY} textAnchor="middle">кут криші</text>
       <text x={kutLabelX} y={kutLabelY + 17}
-        fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="middle">{roofAngle}</text>
+        fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="middle">{roofAngle}°</text>
 
       {/* ── Arc: кут1 (roof → panel) ── */}
       <path d={`M ${kut1Sx},${kut1Sy} A ${arcKut1},${arcKut1} 0 0,0 ${kut1Ex},${kut1Ey}`}
         fill="none" stroke={GRAY} strokeWidth="1.3" />
-      {/* кут1 value near arc */}
-      <text x={kut1ValX} y={kut1ValY + 5}
-        fontSize="13" fill={GRAY} fontWeight="bold" textAnchor="middle">{angle1}</text>
-      {/* кут1 callout label to the right */}
-      <text x={calloutTextX} y={By - 38}
-        fontSize="12" fill={GRAY} textAnchor="start">кут1</text>
-      <line x1={calloutAnchorX} y1={By - 34} x2={kut1ValX + 8} y2={kut1ValY - 2}
+      {/* кут1 callout: label "кут1" then value below it — positioned below "висота панелі" callout */}
+      <line x1={calloutAnchorX} y1={PMy + 28} x2={kut1ValX + 8} y2={kut1ValY - 2}
         stroke={GRAY} strokeWidth="0.8" />
+      <text x={calloutTextX} y={PMy + 28}
+        fontSize="12" fill={GRAY} textAnchor="start">кут1</text>
+      <text x={calloutTextX} y={PMy + 44}
+        fontSize="14" fill={GRAY} fontWeight="bold" textAnchor="start">{angle1}°</text>
 
       {/* ── d2: S → T ── */}
       <line x1={Sx} y1={By + 12} x2={Sx} y2={By + 36} stroke={RED} strokeWidth="1" />
@@ -364,21 +403,19 @@ export const ResultComponent = ({ panelHeight, panelAngle, onRoof, roofAngle, on
           <span className="result-key">Кут нахилу панелі:</span>
           <span className="result-val">{pAngle}°</span>
         </div>
-        {onRoof && <>
+        {onRoof && (
           <div className="result-row">
             <span className="result-key">Кут нахилу криші:</span>
             <span className="result-val">{rAngle}°</span>
           </div>
-          <div className="result-row">
-            <span className="result-key">Кут1 (панель − криша):</span>
-            <span className="result-val">{angle1}°</span>
-          </div>
-          <div className="result-row">
-            <span className="result-key">a (28 + кут криші):</span>
-            <span className="result-val">{a}°</span>
-          </div>
-        </>}
+        )}
+
         <div className="result-divider" />
+
+        {onRoof && <div className="result-row">
+          <span className="result-key">Кут1 (панель − криша):</span>
+          <span className="result-val">{angle1}°</span>
+        </div>}
         <div className="result-row">
           <span className="result-key">h:</span>
           <span className="result-val cyan">{h} м</span>
